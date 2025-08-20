@@ -53,12 +53,13 @@ function readBlob() {
 }
 
 function createBlob() {
+  const dataPath = path.join(process.cwd(), process.argv[4])
+  
   const hash = crypto.createHash("sha1").update(dataPath).digest("hex")
   process.stdout.write(hash)
   const blobDirName = hash.substring(0, 2)
   const blobFileName = hash.slice(2)
 
-  const dataPath = path.join(process.cwd(), process.argv[4])
   const data = fs.readFileSync(dataPath)
   const dataBuffer = Buffer.from(`blob ${data.length}\x00${data.toString()}`)
   const compressedData = zlib.deflateSync(dataBuffer)
