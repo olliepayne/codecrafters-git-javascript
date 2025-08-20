@@ -17,7 +17,7 @@ switch (command) {
     readBlob()
     break
   case "hash-object":
-    hashObject()
+    createBlob()
     break
   default:
     throw new Error(`Unknown command ${command}`)
@@ -52,19 +52,20 @@ function readBlob() {
   )
 }
 
-function hashObject() {
+function createBlob() {
   const dataPath = path.join(process.cwd(), process.argv[4])
   const data = fs.readFileSync(dataPath)
-  const compressedData = zlib.deflateSync(data)
+  const dataBuffer = Buffer.from(`blob ${data.length}\x00${data.toString()}`)
+  const compressedData = zlib.deflateSync(dataBuffer)
 
-  const objectHash = crypto.createHash("sha1").update(dataPath).digest("hex")
-  process.stdout.write(objectHash)
-  const objectDir = objectHash.substring(0, 2)
-  const objectFileName = objectHash.slice(2)
+  const hash = crypto.createHash("sha1").update(dataPath).digest("hex")
+  process.stdout.write(hash)
+  const blobDirName = hash.substring(0, 2)
+  const blobFileName = hash.slice(2)
 
-  const objectDirPath = path.join(process.cwd(), ".git", "objects", objectDir)
-  fs.mkdirSync(objectDirPath, { recursive: true })
-  fs.writeFileSync(path.join(objectDirPath, objectFileName), compressedData)
+  const blobDirPath = path.join(process.cwd(), ".git", "objects", blobDirName)
+  fs.mkdirSync(blobDirPath, { recursive: true })
+  fs.writeFileSync(path.join(blobDirPath, blobFileName), compressedData)
 }
 
 // test blob: 176a458f94e0ea5272ce67c36bf30b6be9caf623
