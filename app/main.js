@@ -1,6 +1,7 @@
 const fs = require("fs")
 const path = require("path")
 const zlib = require("zlib")
+const crypto = require("crypto")
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.error("Logs from your program will appear here!")
@@ -14,6 +15,9 @@ switch (command) {
     break
   case "cat-file":
     readBlob()
+    break
+  case "hash-object":
+    hashObject()
     break
   default:
     throw new Error(`Unknown command ${command}`)
@@ -46,6 +50,21 @@ function readBlob() {
   process.stdout.write(
     decompressedBuffer.substring(nullByteIndex + 1, decompressedBuffer.length)
   )
+}
+
+function hashObject() {
+  const dataPath = path.join(process.cwd(), process.argv[4])
+  const data = fs.readFileSync(dataPath)
+  const compressedData = zlib.deflateSync(data)
+
+  const objectHash = crypto.createHash("sha1").update(dataPath).digest("hex")
+  process.stdout.write(objectHash)
+  const objectDir = objectHash.substring(0, 2)
+  const objectFileName = objectHash.slice(2)
+
+  const objectDirPath = path.join(process.cwd(), ".git", "objects", objectDir)
+  fs.mkdirSync(objectDirPath, { recursive: true })
+  fs.writeFileSync(path.join(objectDirPath, objectFileName), compressedData)
 }
 
 // test blob: 176a458f94e0ea5272ce67c36bf30b6be9caf623
